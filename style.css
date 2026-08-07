@@ -1,14 +1,12 @@
 /* Marching Doppler Shift Calculator */
 
 :root {
-  --bg: #f4f5f7;
   --panel: #ffffff;
   --ink: #1f2430;
   --muted: #6b7280;
   --line: #e3e6ea;
   --accent: #2b62d9;
   --accent-dark: #1f4cb0;
-  --green: #2e9e44;
   --red: #d63a3a;
   --radius: 12px;
   --shadow: 0 1px 3px rgba(20, 26, 40, 0.08), 0 4px 16px rgba(20, 26, 40, 0.06);
@@ -20,9 +18,11 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg);
+  background: linear-gradient(180deg, #e8eef7 0%, #dce5f1 55%, #d3deec 100%);
+  background-attachment: fixed;
   color: var(--ink);
   line-height: 1.5;
 }
@@ -30,21 +30,15 @@ body {
 .site-header {
   background: linear-gradient(135deg, #16213e 0%, #1f4cb0 100%);
   color: #fff;
-  padding: 28px 24px 32px;
+  padding: 26px 24px;
   text-align: center;
+  box-shadow: 0 2px 12px rgba(22, 33, 62, 0.25);
 }
 
 .site-header h1 {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 1.7rem;
   letter-spacing: 0.01em;
-}
-
-.site-header p {
-  margin: 0 auto;
-  max-width: 640px;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
 }
 
 .layout {
@@ -252,12 +246,14 @@ button.secondary:hover {
   display: inline-block;
   width: 11px;
   height: 11px;
-  border: 1px solid #111;
+  border: 1px solid #fff;
+  box-sizing: border-box;
 }
 
-.swatch.diamond {
-  background: var(--green);
-  transform: rotate(45deg) scale(0.85);
+.swatch.circle-open {
+  background: transparent;
+  border: 2.5px solid var(--red);
+  border-radius: 50%;
 }
 
 .swatch.circle {
@@ -318,6 +314,19 @@ button.secondary:hover {
   color: var(--muted);
   font-size: 0.8rem;
   padding: 0 16px 32px;
+}
+
+.site-footer p {
+  margin: 4px 0;
+}
+
+.site-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
 }
 
 /* ---------- Responsive ---------- */

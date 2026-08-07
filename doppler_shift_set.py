@@ -309,9 +309,9 @@ dot1 = {
     "steps_io": 0,
     "io": "inside",
     "yd_io": 45,
-    "steps_fb": 8,
+    "steps_fb": 0,
     "fb": "behind",
-    "marker_fb": "front sideline",
+    "marker_fb": "front hash",
 }
 
 dot2 = {
@@ -319,16 +319,16 @@ dot2 = {
     "steps_io": 0,
     "io": "inside",
     "yd_io": 45,
-    "steps_fb": 8,
-    "fb": "behind",
-    "marker_fb": "front sideline",
+    "steps_fb": 12,
+    "fb": "in front",
+    "marker_fb": "front hash",
 }
 
 z_coord_obs = 2
 z_coord1 = 2
 z_coord2 = 2
 
-tempo = 160
+tempo = 192
 counts = 12
 f_s = 440
 t_start = 0

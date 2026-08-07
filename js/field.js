@@ -116,17 +116,24 @@ class FieldPlot {
     const W = (xMax - xMin) * this._scale;
     const H = (yMax - yMin) * this._scale;
 
-    // Apron (out of bounds) and turf
-    ctx.fillStyle = "#e9ede9";
+    // Out-of-bounds apron (darker turf) and playing field
+    ctx.fillStyle = "#2f5e34";
     ctx.fillRect(0, 0, W, H);
     const tl = this._px(0, FIELD.width);
-    ctx.fillStyle = "#f2f7f0";
+    ctx.fillStyle = "#41804a";
     ctx.fillRect(tl.px, tl.py, FIELD.length * this._scale, FIELD.width * this._scale);
 
     const step = FIELD.ydLineDist; // 5 yd
 
+    // Alternating 5-yard mowing stripes
+    ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+    for (let x = step; x < FIELD.length; x += 2 * step) {
+      const p = this._px(x, FIELD.width);
+      ctx.fillRect(p.px, p.py, step * this._scale, FIELD.width * this._scale);
+    }
+
     // 2-step gridlines (every 1.25 yd), faint
-    ctx.strokeStyle = "rgba(128, 128, 128, 0.35)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
     ctx.lineWidth = 0.5;
     for (let x = 0; x <= FIELD.length + 1e-9; x += step / 4) {
       this._line(ctx, x, 0, x, FIELD.width);
@@ -136,7 +143,7 @@ class FieldPlot {
     }
 
     // 4-step gridlines (every 2.5 yd)
-    ctx.strokeStyle = "rgba(128, 128, 128, 0.7)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
     ctx.lineWidth = 0.75;
     for (let x = 0; x <= FIELD.length + 1e-9; x += step / 2) {
       this._line(ctx, x, 0, x, FIELD.width);
@@ -146,21 +153,23 @@ class FieldPlot {
     }
 
     // Yard lines
-    ctx.strokeStyle = "#1a1a1a";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = 1.25;
     for (let x = 0; x <= FIELD.length + 1e-9; x += step) {
       this._line(ctx, x, 0, x, FIELD.width);
     }
 
     // Sidelines and hashes
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
     this._line(ctx, 0, 0, FIELD.length, 0);
     this._line(ctx, 0, FIELD.width, FIELD.length, FIELD.width);
+    ctx.lineWidth = 1.5;
     this._line(ctx, 0, FIELD.frontHash, FIELD.length, FIELD.frontHash);
     this._line(ctx, 0, FIELD.backHash, FIELD.length, FIELD.backHash);
 
     // Yard number labels just below the front sideline
-    ctx.fillStyle = "#444";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
     ctx.font =
       "11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
     ctx.textAlign = "center";
@@ -168,7 +177,7 @@ class FieldPlot {
     const labels = ["G", "10", "20", "30", "40", "50", "40", "30", "20", "10", "G"];
     labels.forEach((label, i) => {
       const p = this._px(i * 10, 0);
-      ctx.fillText(label, p.px, p.py + 4);
+      ctx.fillText(label, p.px, p.py + 5);
     });
   }
 
@@ -177,37 +186,72 @@ class FieldPlot {
     if (!this.markers) return;
     const { start, end, obs } = this.markers;
 
-    // Movement path
-    ctx.strokeStyle = "rgba(60, 60, 60, 0.8)";
-    ctx.lineWidth = 1.25;
-    ctx.setLineDash([5, 4]);
-    this._line(ctx, start.x, start.y, end.x, end.y);
-    ctx.setLineDash([]);
-
-    this._marker(ctx, start, "diamond", "#2e9e44");
+    this._arrow(ctx, start, end);
+    this._marker(ctx, start, "circle-open", "#d63a3a");
     this._marker(ctx, end, "circle", "#d63a3a");
     this._marker(ctx, obs, "square", "#2b62d9");
+  }
+
+  /** Arrow from start to end, trimmed so it doesn't cover the markers. */
+  _arrow(ctx, start, end) {
+    const a = this._px(start.x, start.y);
+    const b = this._px(end.x, end.y);
+    const dx = b.px - a.px;
+    const dy = b.py - a.py;
+    const len = Math.hypot(dx, dy);
+    const trim = 9; // marker radius + a little breathing room
+    if (len < 2 * trim + 4) return; // too short to draw an arrow
+    const ux = dx / len;
+    const uy = dy / len;
+    const x1 = a.px + ux * trim;
+    const y1 = a.py + uy * trim;
+    const x2 = b.px - ux * trim;
+    const y2 = b.py - uy * trim;
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 2;
+
+    // Shaft (stop short of the arrowhead)
+    const head = 10;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2 - ux * head * 0.8, y2 - uy * head * 0.8);
+    ctx.stroke();
+
+    // Filled arrowhead
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - ux * head - uy * head * 0.45, y2 - uy * head + ux * head * 0.45);
+    ctx.lineTo(x2 - ux * head + uy * head * 0.45, y2 - uy * head - ux * head * 0.45);
+    ctx.closePath();
+    ctx.fill();
   }
 
   _marker(ctx, pos, shape, color) {
     const { px, py } = this._px(pos.x, pos.y);
     const r = 6;
-    ctx.fillStyle = color;
-    ctx.strokeStyle = "#111";
-    ctx.lineWidth = 1;
     ctx.beginPath();
-    if (shape === "circle") {
+    if (shape === "circle-open") {
+      // Open circle: red border, no fill
       ctx.arc(px, py, r, 0, 2 * Math.PI);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    } else if (shape === "circle") {
+      ctx.arc(px, py, r, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
     } else if (shape === "square") {
       ctx.rect(px - r, py - r, 2 * r, 2 * r);
-    } else if (shape === "diamond") {
-      ctx.moveTo(px, py - r * 1.2);
-      ctx.lineTo(px + r * 1.2, py);
-      ctx.lineTo(px, py + r * 1.2);
-      ctx.lineTo(px - r * 1.2, py);
-      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
-    ctx.fill();
-    ctx.stroke();
   }
 }

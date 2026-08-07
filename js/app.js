@@ -12,9 +12,9 @@ const DEFAULTS = {
     stepsIo: 0,
     io: "inside",
     yd: 45,
-    stepsFb: 8,
+    stepsFb: 0,
     fb: "behind",
-    markerFb: "front sideline",
+    markerFb: "front hash",
     z: 2,
   },
   end: {
@@ -22,9 +22,9 @@ const DEFAULTS = {
     stepsIo: 0,
     io: "inside",
     yd: 45,
-    stepsFb: 8,
-    fb: "behind",
-    markerFb: "front sideline",
+    stepsFb: 12,
+    fb: "front",
+    markerFb: "front hash",
     z: 2,
   },
   // Lucas Oil Stadium judges box: on the 50, 85 steps in front of the front
@@ -42,7 +42,7 @@ const DEFAULTS = {
   // Estimated Lucas Oil Stadium interior: 70 degF climate-controlled, ambient
   // pressure at Indianapolis' elevation (~715 ft), 50% RH, 1000 ppm CO2.
   env: { temp: 70, pressure: 98700, rh: 50, co2ppm: 1000 },
-  music: { tempo: 160, counts: 12, freq: 440 },
+  music: { tempo: 192, counts: 12, freq: 440 },
 };
 
 // ---------- Dot form construction ----------
@@ -214,7 +214,7 @@ function buildChart() {
   });
 }
 
-function updateChart(countsList, cents, tempoShift) {
+function updateChart(countsList, cents, tempoShift, tempo) {
   shiftChart.data.datasets[0].data = countsList.map((c, i) => ({
     x: c,
     y: cents[i],
@@ -225,6 +225,22 @@ function updateChart(countsList, cents, tempoShift) {
   }));
   shiftChart.options.scales.x.min = countsList[0];
   shiftChart.options.scales.x.max = countsList[countsList.length - 1];
+
+  // Lock the two y axes to the same physical scale so the cents and bpm
+  // curves overlay as a single line. For small shifts,
+  //   tempoShift = tempo * (f/fs - 1)  and  cents = (1200/ln 2) * ln(f/fs),
+  // so tempoShift ~= cents * (tempo * ln 2 / 1200). Scale the bpm axis by
+  // that factor for any tempo/conditions.
+  const k = (tempo * Math.LN2) / 1200;
+  let lo = Math.min(...cents);
+  let hi = Math.max(...cents);
+  const pad = Math.max((hi - lo) * 0.05, 1e-6);
+  lo -= pad;
+  hi += pad;
+  shiftChart.options.scales.y.min = lo;
+  shiftChart.options.scales.y.max = hi;
+  shiftChart.options.scales.y1.min = lo * k;
+  shiftChart.options.scales.y1.max = hi * k;
   shiftChart.update();
 }
 
@@ -295,28 +311,28 @@ function run() {
       obs: pObs,
     });
 
-    updateChart(res.countsList, res.cents, res.tempoShift);
+    updateChart(res.countsList, res.cents, res.tempoShift, tempo);
 
     const r1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
     renderResults([
       { label: "Tempo", value: r1(tempo), sub: "bpm" },
       { label: "Counts", value: counts },
-      { label: "Frequency", value: r1(fs), sub: "Hz" },
+      { label: "Performer frequency", value: r1(fs), sub: "Hz" },
       { label: "Step size", value: `${r1(res.stepSizeMarch)} to 5` },
       {
-        label: "Mean shift",
+        label: "Tuning shift",
         value: `${r1(mean(res.cents))}`,
         sub: `\u00b1 ${r1(std(res.cents))} cents`,
       },
       {
-        label: "Mean frequency",
-        value: `${r1(mean(res.fO))}`,
-        sub: `\u00b1 ${r1(std(res.fO))} Hz`,
-      },
-      {
-        label: "Mean tempo shift",
+        label: "Tempo shift",
         value: `${r1(mean(res.tempoShift))}`,
         sub: `\u00b1 ${r1(std(res.tempoShift))} bpm`,
+      },
+      {
+        label: "Observed frequency",
+        value: `${r1(mean(res.fO))}`,
+        sub: `\u00b1 ${r1(std(res.fO))} Hz`,
       },
       { label: "Sound speed", value: r1(res.cSI), sub: "m/s" },
     ]);
