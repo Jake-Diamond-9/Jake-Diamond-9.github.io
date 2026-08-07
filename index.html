@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marching Doppler Shift Calculator</title>
+  <meta
+    name="description"
+    content="Calculate the Doppler pitch and tempo shift heard by an observer as a performer marches across a football field."
+  />
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="js/doppler.js"></script>
+  <script defer src="js/field.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>Marching Doppler Shift Calculator</h1>
+    <p>
+      How much does a performer's pitch and tempo bend as they march? Enter a
+      move, an observer, and the room conditions to find out. Defaults are set
+      for the judges box at Lucas Oil Stadium.
+    </p>
+  </header>
+
+  <main class="layout">
+    <form id="controls" class="panel form-panel" novalidate>
+      <fieldset>
+        <legend>Performer Start</legend>
+        <div id="dot-start" class="dot-fields"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Performer End</legend>
+        <div id="dot-end" class="dot-fields"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Observer</legend>
+        <p class="hint">Default: Lucas Oil judges box (85 steps in front of the front sideline, 33 yd up).</p>
+        <div id="dot-obs" class="dot-fields"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Environment</legend>
+        <p class="hint">Defaults estimated for the interior of Lucas Oil Stadium.</p>
+        <div class="grid-2">
+          <label>Temperature (&deg;F)
+            <input type="number" id="env-temp" step="any" />
+          </label>
+          <label>Pressure (Pa)
+            <input type="number" id="env-pressure" step="any" />
+          </label>
+          <label>Relative humidity (%)
+            <input type="number" id="env-rh" step="any" min="0" max="100" />
+          </label>
+          <label>CO&#8322; (ppm)
+            <input type="number" id="env-co2" step="any" min="0" />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Music</legend>
+        <div class="grid-3">
+          <label>Tempo (bpm)
+            <input type="number" id="music-tempo" step="any" min="1" />
+          </label>
+          <label>Counts
+            <input type="number" id="music-counts" step="any" min="1" />
+          </label>
+          <label>Frequency (Hz)
+            <input type="number" id="music-freq" step="any" min="1" />
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="button-row">
+        <button type="submit" class="primary">Calculate</button>
+        <button type="button" id="reset-defaults" class="secondary">Reset defaults</button>
+      </div>
+    </form>
+
+    <section class="output-column">
+      <div id="error-banner" class="banner error" hidden></div>
+      <div id="warning-banner" class="banner warning" hidden></div>
+
+      <div class="panel">
+        <h2>Field</h2>
+        <div id="field-container" class="field-container">
+          <canvas class="field-base"></canvas>
+          <canvas class="field-overlay"></canvas>
+        </div>
+        <div class="field-legend">
+          <span><i class="swatch diamond"></i>Start</span>
+          <span><i class="swatch circle"></i>End</span>
+          <span><i class="swatch square"></i>Observer</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Shift Over the Move</h2>
+        <div class="chart-container">
+          <canvas id="shift-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Results</h2>
+        <dl id="results" class="results-grid"></dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      Sound speed from Cramer, <em>J. Acoust. Soc. Am.</em> 93, 2510&ndash;2516
+      (1993). Field grid uses an 8-to-5 step on an NCAA field.
+    </p>
+  </footer>
+</body>
+</html>
