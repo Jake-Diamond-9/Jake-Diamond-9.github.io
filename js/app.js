@@ -164,18 +164,17 @@ function buildChart() {
           backgroundColor: "#2b62d9",
           yAxisID: "y",
           pointRadius: 0,
-          borderWidth: 2,
+          borderWidth: 3,
           tension: 0.15,
         },
         {
           label: "Tempo shift (bpm)",
           data: [],
-          borderColor: "#e07b28",
-          backgroundColor: "#e07b28",
+          borderColor: "#d63a3a",
+          backgroundColor: "#d63a3a",
           yAxisID: "y1",
           pointRadius: 0,
-          borderWidth: 2,
-          borderDash: [6, 4],
+          borderWidth: 3,
           tension: 0.15,
         },
       ],
@@ -214,7 +213,7 @@ function buildChart() {
   });
 }
 
-function updateChart(countsList, cents, tempoShift, tempo) {
+function updateChart(countsList, cents, tempoShift) {
   shiftChart.data.datasets[0].data = countsList.map((c, i) => ({
     x: c,
     y: cents[i],
@@ -225,22 +224,6 @@ function updateChart(countsList, cents, tempoShift, tempo) {
   }));
   shiftChart.options.scales.x.min = countsList[0];
   shiftChart.options.scales.x.max = countsList[countsList.length - 1];
-
-  // Lock the two y axes to the same physical scale so the cents and bpm
-  // curves overlay as a single line. For small shifts,
-  //   tempoShift = tempo * (f/fs - 1)  and  cents = (1200/ln 2) * ln(f/fs),
-  // so tempoShift ~= cents * (tempo * ln 2 / 1200). Scale the bpm axis by
-  // that factor for any tempo/conditions.
-  const k = (tempo * Math.LN2) / 1200;
-  let lo = Math.min(...cents);
-  let hi = Math.max(...cents);
-  const pad = Math.max((hi - lo) * 0.05, 1e-6);
-  lo -= pad;
-  hi += pad;
-  shiftChart.options.scales.y.min = lo;
-  shiftChart.options.scales.y.max = hi;
-  shiftChart.options.scales.y1.min = lo * k;
-  shiftChart.options.scales.y1.max = hi * k;
   shiftChart.update();
 }
 
@@ -311,7 +294,7 @@ function run() {
       obs: pObs,
     });
 
-    updateChart(res.countsList, res.cents, res.tempoShift, tempo);
+    updateChart(res.countsList, res.cents, res.tempoShift);
 
     const r1 = (v) => (Math.round(v * 10) / 10).toFixed(1);
     renderResults([
