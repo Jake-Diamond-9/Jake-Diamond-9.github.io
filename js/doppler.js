@@ -64,24 +64,27 @@ function dot2coord(dot) {
  * rh: relative humidity in percent (valid 0-100)
  * xc: CO2 mole fraction (valid 0-0.01)
  *
- * If any input is outside the validity range, falls back to STP conditions
- * (0 degC, 101325 Pa, dry air, 314 ppm CO2) and reports the reasons in
- * `warnings`.
+ * If any input is outside the validity range, falls back to the estimated
+ * Lucas Oil Stadium interior conditions (72 degF, 98700 Pa, 50% RH,
+ * 1000 ppm CO2) and reports the reasons in `warnings`.
  *
  * Returns { cSI, cYd, warnings } - speed in m/s and yd/s.
  */
 function soundSpeedAir(tF, p, rh, xc) {
-  let t = ((tF - 32) * 5) / 9; // Celsius
-  let T = t + 273.15;
-
   // Water vapor mole fraction from relative humidity (Giacomo, reproduced in
   // the Appendix of Cramer 1993): xw = h * f * psv / p
-  const h = rh / 100;
-  const f = 1.00062 + 3.14e-8 * p + 5.6e-7 * t * t; // enhancement factor
-  const psv = Math.exp(
-    1.2811805e-5 * T * T - 1.9509874e-2 * T + 34.04926034 - 6.3536311e3 / T
-  ); // saturation vapor pressure in Pa
-  let xw = (h * f * psv) / p;
+  const waterVaporMoleFraction = (t, p, rh) => {
+    const T = t + 273.15;
+    const h = rh / 100;
+    const f = 1.00062 + 3.14e-8 * p + 5.6e-7 * t * t; // enhancement factor
+    const psv = Math.exp(
+      1.2811805e-5 * T * T - 1.9509874e-2 * T + 34.04926034 - 6.3536311e3 / T
+    ); // saturation vapor pressure in Pa
+    return (h * f * psv) / p;
+  };
+
+  let t = ((tF - 32) * 5) / 9; // Celsius
+  let xw = waterVaporMoleFraction(t, p, rh);
 
   const warnings = [];
   if (!(t >= 0 && t <= 30)) {
@@ -90,7 +93,7 @@ function soundSpeedAir(tF, p, rh, xc) {
     );
   }
   if (!(p >= 75000 && p <= 102000)) {
-    warnings.push(`pressure ${p} Pa (valid 75000\u2013102000 Pa)`);
+    warnings.push(`pressure ${p / 1000} kPa (valid 75\u2013102 kPa)`);
   }
   if (!(rh >= 0 && rh <= 100)) {
     warnings.push(`relative humidity ${rh}% (valid 0\u2013100%)`);
@@ -103,11 +106,12 @@ function soundSpeedAir(tF, p, rh, xc) {
   }
 
   if (warnings.length > 0) {
-    // Fall back to STP conditions, same as the Python script.
-    t = 0.0;
-    p = 101325.0;
-    xw = 0.0;
-    xc = 0.000314;
+    // Fall back to the estimated Lucas Oil Stadium interior conditions:
+    // 72 degF, 98700 Pa, 50% RH, 1000 ppm CO2.
+    t = ((72 - 32) * 5) / 9;
+    p = 98700.0;
+    xc = 0.001;
+    xw = waterVaporMoleFraction(t, p, 50);
   }
 
   // Coefficients for the speed of sound from Table III

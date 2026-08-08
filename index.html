@@ -9,11 +9,11 @@
     content="Calculate the Doppler pitch and tempo shift heard by an observer as a performer marches across a football field."
   />
   <!-- Bump ?v= on each deploy so browsers pick up new assets immediately -->
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=4" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script defer src="js/doppler.js?v=3"></script>
-  <script defer src="js/field.js?v=3"></script>
-  <script defer src="js/app.js?v=3"></script>
+  <script defer src="js/doppler.js?v=4"></script>
+  <script defer src="js/field.js?v=4"></script>
+  <script defer src="js/app.js?v=4"></script>
 </head>
 <body>
   <header class="site-header">
@@ -45,7 +45,7 @@
           <label>Temperature (&deg;F)
             <input type="number" id="env-temp" step="any" />
           </label>
-          <label>Pressure (Pa)
+          <label>Pressure (kPa)
             <input type="number" id="env-pressure" step="any" />
           </label>
           <label>Relative humidity (%)
@@ -65,6 +65,20 @@
           </label>
           <label>Counts
             <input type="number" id="music-counts" step="any" min="1" />
+          </label>
+          <label>Pitch input
+            <select id="freq-mode">
+              <option value="freq">Frequency (Hz)</option>
+              <option value="note">Note &amp; octave</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid-3">
+          <label id="note-field" hidden>Note
+            <select id="music-note"></select>
+          </label>
+          <label id="octave-field" hidden>Octave
+            <select id="music-octave"></select>
           </label>
           <label>Frequency (Hz)
             <input type="number" id="music-freq" step="any" min="1" />
