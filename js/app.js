@@ -329,21 +329,30 @@ function resetToneButtons() {
   });
 }
 
-function toneButtonClick(event) {
+async function toneButtonClick(event) {
   const btn = event.currentTarget;
   const wasPlaying = btn.textContent.trim() === "Stop";
   if (tonePlaying()) stopTone(); // resets all labels via onEnded
   if (wasPlaying || !lastRun) return;
-  playTone(
-    {
-      fS: lastRun.fS,
-      fO: lastRun.fO,
-      duration: lastRun.duration,
-      voice: btn.dataset.voice,
-    },
-    resetToneButtons
-  );
   btn.textContent = "Stop";
+  try {
+    // Await resume() so iOS/Safari unlocks audio inside this user gesture.
+    await playTone(
+      {
+        fS: lastRun.fS,
+        fO: lastRun.fO,
+        duration: lastRun.duration,
+        voice: btn.dataset.voice,
+      },
+      resetToneButtons
+    );
+  } catch (err) {
+    resetToneButtons();
+    showBanner(
+      "error-banner",
+      "Could not start audio playback. Tap again, or check that silent mode is off."
+    );
+  }
 }
 
 // ---------- Main run ----------

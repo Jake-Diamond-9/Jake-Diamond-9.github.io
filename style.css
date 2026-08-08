@@ -45,6 +45,82 @@ body {
   letter-spacing: 0.01em;
 }
 
+.site-nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.site-nav a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.site-nav a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.site-nav a.active {
+  background: #fff;
+  color: #1f4cb0;
+  border-color: #fff;
+}
+
+/* ---------- About page ---------- */
+
+.about-layout {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.about-section p {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.about-section p:last-child {
+  margin-bottom: 0;
+}
+
+.about-links {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.about-links a {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #eef3fb;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 1px solid #d5e0f2;
+}
+
+.about-links a:hover {
+  background: #e0eaf8;
+}
+
 .layout {
   display: grid;
   grid-template-columns: 380px minmax(0, 1fr);

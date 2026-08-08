@@ -15,6 +15,20 @@ function tonePlaying() {
 }
 
 /**
+ * Ensure the AudioContext is running. iOS/Safari often create it suspended and
+ * only unlock audio after resume() resolves inside a user gesture.
+ */
+async function ensureAudioRunning() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    await audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+/**
  * Play sine voice(s) for `duration` seconds.
  *
  * fS: performer frequency in Hz (constant voice)
@@ -22,17 +36,10 @@ function tonePlaying() {
  * voice: "performer" (fS only), "observer" (fO curve only), or "combined"
  * onEnded: called once when playback finishes or is stopped
  */
-function playTone({ fS, fO, duration, voice }, onEnded) {
+async function playTone({ fS, fO, duration, voice }, onEnded) {
   stopTone();
 
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-
-  const ctx = audioCtx;
+  const ctx = await ensureAudioRunning();
   const t0 = ctx.currentTime + 0.02;
 
   const master = ctx.createGain();
@@ -99,6 +106,11 @@ function stopTone() {
   if (!activeTone) return;
   const tone = activeTone;
   activeTone = null; // clear first so osc.onended does nothing
+
+  if (!audioCtx) {
+    if (tone.onEnded) tone.onEnded();
+    return;
+  }
 
   const now = audioCtx.currentTime;
   const gain = tone.master.gain;
