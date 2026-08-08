@@ -322,6 +322,23 @@ button.secondary:hover {
   font-size: 0.78rem;
 }
 
+/* ---------- Listen ---------- */
+
+.listen-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.listen-row label {
+  flex: 1;
+  max-width: 260px;
+}
+
+.listen-row button {
+  min-width: 110px;
+}
+
 .site-footer {
   text-align: center;
   color: var(--muted);

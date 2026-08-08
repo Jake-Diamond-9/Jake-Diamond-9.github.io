@@ -9,11 +9,12 @@
     content="Calculate the Doppler pitch and tempo shift heard by an observer as a performer marches across a football field."
   />
   <!-- Bump ?v= on each deploy so browsers pick up new assets immediately -->
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script defer src="js/doppler.js?v=4"></script>
-  <script defer src="js/field.js?v=4"></script>
-  <script defer src="js/app.js?v=4"></script>
+  <script defer src="js/doppler.js?v=5"></script>
+  <script defer src="js/field.js?v=5"></script>
+  <script defer src="js/audio.js?v=5"></script>
+  <script defer src="js/app.js?v=5"></script>
 </head>
 <body>
   <header class="site-header">
@@ -119,6 +120,26 @@
       <div class="panel">
         <h2>Results</h2>
         <dl id="results" class="results-grid"></dl>
+      </div>
+
+      <div class="panel">
+        <h2>Listen</h2>
+        <p class="hint">
+          Play the performer tone together with the Doppler-shifted tone heard
+          by the observer, for the duration of the move.
+        </p>
+        <div class="listen-row">
+          <label>Instrument
+            <select id="instrument">
+              <option value="sine">Pure sine</option>
+              <option value="trumpet">Trumpet</option>
+              <option value="french horn">French horn</option>
+              <option value="trombone">Trombone</option>
+              <option value="tuba">Tuba</option>
+            </select>
+          </label>
+          <button type="button" id="play-tone" class="primary">Play</button>
+        </div>
       </div>
     </section>
   </main>

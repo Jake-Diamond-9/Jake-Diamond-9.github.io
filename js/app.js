@@ -318,6 +318,33 @@ function showBanner(id, message) {
   }
 }
 
+// ---------- Tone playback ----------
+
+// Latest calculation, kept for the Listen card
+let lastRun = null;
+
+function setPlayButton(playing) {
+  document.getElementById("play-tone").textContent = playing ? "Stop" : "Play";
+}
+
+function togglePlayback() {
+  if (tonePlaying()) {
+    stopTone(); // resets the button via onEnded
+    return;
+  }
+  if (!lastRun) return;
+  playTone(
+    {
+      fS: lastRun.fS,
+      fO: lastRun.fO,
+      duration: lastRun.duration,
+      instrument: document.getElementById("instrument").value,
+    },
+    () => setPlayButton(false)
+  );
+  setPlayButton(true);
+}
+
 // ---------- Main run ----------
 
 let fieldPlot = null;
@@ -350,6 +377,10 @@ function run() {
     const l = [pObs.x, pObs.y, obs.z];
 
     const res = doppler(m, n, l, tempo, counts, fs, env);
+
+    // A new calculation replaces any tone currently playing.
+    if (tonePlaying()) stopTone();
+    lastRun = { fS: fs, fO: res.fO, duration: (60 / tempo) * counts };
 
     // Field plot: gridlines only redraw if the extent changed.
     fieldPlot.setMarkers({
@@ -419,6 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applyDefaults();
     run();
   });
+  document.getElementById("play-tone").addEventListener("click", togglePlayback);
 
   // Draw the field grid and the default calculation on load.
   run();
