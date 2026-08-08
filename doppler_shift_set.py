@@ -4,8 +4,8 @@ Doppler shift of a marching band drill set.
 
 Pure-Python twin of the web app at https://jake-diamond-9.github.io/ - the
 same inputs produce the same numbers, plots, and results. Optionally plays
-the performer tone together with the Doppler-shifted tone heard by the
-observer (pure sine or a synthesized brass timbre).
+sine tones: the performer tone, the Doppler-shifted tone heard by the
+observer, or both combined.
 """
 
 import subprocess
@@ -75,10 +75,11 @@ f_s = 440  # Hz, used when freq_mode == "freq"
 note = "A"  # used when freq_mode == "note"
 octave = 4  # 0-8, used when freq_mode == "note"
 
-# Tone playback: mixes the constant performer tone with the time-varying
-# Doppler-shifted tone heard by the observer, for the duration of the move.
+# Tone playback (sine tones, matching the web app's three play buttons):
+# "performer" = the constant performer tone, "observer" = the time-varying
+# Doppler-shifted tone heard by the observer, "combined" = both together.
 play_audio = True
-instrument = "sine"  # "sine", "trumpet", "french horn", "trombone", or "tuba"
+audio_voice = "combined"  # "performer", "observer", or "combined"
 audio_file = "doppler_tone.wav"
 
 # ============================================================================
@@ -108,16 +109,6 @@ NOTE_FREQS = {
     "A": [27.50, 55.00, 110.00, 220.00, 440.00, 880.00, 1760.00, 3520.00, 7040.00],
     "A#/Bb": [29.14, 58.27, 116.54, 233.08, 466.16, 932.33, 1864.66, 3729.31, 7458.62],
     "B": [30.87, 61.74, 123.47, 246.94, 493.88, 987.77, 1975.53, 3951.07, 7902.13],
-}
-
-# Relative harmonic amplitudes for the tone playback (same recipes as the
-# web app): harmonic 1 (fundamental), 2, 3, ...
-HARMONICS = {
-    "sine": [1.0],
-    "trumpet": [1.0, 0.9, 0.9, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.15],
-    "french horn": [1.0, 0.55, 0.3, 0.18, 0.09, 0.05, 0.03],
-    "trombone": [1.0, 0.75, 0.6, 0.4, 0.25, 0.15, 0.08, 0.05],
-    "tuba": [1.0, 0.5, 0.2, 0.08, 0.04],
 }
 
 
@@ -408,15 +399,15 @@ def doppler(m, n, l, tempo, counts, t_start, f_s, t_f=72, p=98700, rh=50, xc=0.0
     return V_so_der, t, counts_list, f_o, f_o_tempo, tempo_shift, cents, step_size, c_SI
 
 
-def synthesize_tones(f_s, t_sec, f_o_t, instrument="sine", sample_rate=44100):
+def synthesize_tones(f_s, t_sec, f_o_t, voice="combined", sample_rate=44100):
     """
-    Synthesize the performer tone (constant f_s) mixed with the Doppler-
+    Synthesize sine tone(s) matching the web app's three play buttons:
+    "performer" = the constant performer tone f_s, "observer" = the Doppler-
     shifted tone heard by the observer (frequency f_o_t sampled at times
-    t_sec), using the harmonic recipe for the chosen instrument.
+    t_sec), "combined" = both mixed.
 
     Returns (samples, sample_rate) with samples as float64 in [-1, 1].
     """
-    harmonics = HARMONICS[instrument]
     duration = t_sec[-1] - t_sec[0]
     n_samples = int(round(duration * sample_rate))
     t_audio = np.arange(n_samples) / sample_rate
@@ -427,13 +418,15 @@ def synthesize_tones(f_s, t_sec, f_o_t, instrument="sine", sample_rate=44100):
     phase_shift = 2 * np.pi * np.cumsum(f_shift) / sample_rate
     phase_steady = 2 * np.pi * f_s * t_audio
 
-    def voice(phase):
-        out = np.zeros_like(phase)
-        for k, amp in enumerate(harmonics, start=1):
-            out += amp * np.sin(k * phase)
-        return out / np.sum(harmonics)
+    voices = []
+    if voice in ("performer", "combined"):
+        voices.append(np.sin(phase_steady))
+    if voice in ("observer", "combined"):
+        voices.append(np.sin(phase_shift))
+    if not voices:
+        raise ValueError(f"unknown audio voice {voice!r}")
 
-    mix = 0.5 * (voice(phase_steady) + voice(phase_shift))
+    mix = sum(voices) / len(voices)
 
     # Short attack/release envelope to avoid clicks
     env = np.ones(n_samples)
@@ -671,7 +664,5 @@ print(f"Sound Speed:         {np.round(c_SI, 1)} m/s")
 # ============================================================================
 
 if play_audio:
-    samples, sr = synthesize_tones(
-        f_s, time[0, :], f_o[0, :], instrument=instrument
-    )
+    samples, sr = synthesize_tones(f_s, time[0, :], f_o[0, :], voice=audio_voice)
     write_and_play_wav(samples, sr, audio_file)

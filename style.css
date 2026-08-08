@@ -324,19 +324,10 @@ button.secondary:hover {
 
 /* ---------- Listen ---------- */
 
-.listen-row {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.listen-row label {
-  flex: 1;
-  max-width: 260px;
-}
-
-.listen-row button {
-  min-width: 110px;
+.listen-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .site-footer {
@@ -381,5 +372,9 @@ button.secondary:hover {
 
   .chart-container {
     height: 260px;
+  }
+
+  .listen-buttons {
+    grid-template-columns: 1fr;
   }
 }

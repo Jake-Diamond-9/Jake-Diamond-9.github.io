@@ -323,26 +323,27 @@ function showBanner(id, message) {
 // Latest calculation, kept for the Listen card
 let lastRun = null;
 
-function setPlayButton(playing) {
-  document.getElementById("play-tone").textContent = playing ? "Stop" : "Play";
+function resetToneButtons() {
+  document.querySelectorAll(".tone-btn").forEach((btn) => {
+    btn.textContent = btn.dataset.label;
+  });
 }
 
-function togglePlayback() {
-  if (tonePlaying()) {
-    stopTone(); // resets the button via onEnded
-    return;
-  }
-  if (!lastRun) return;
+function toneButtonClick(event) {
+  const btn = event.currentTarget;
+  const wasPlaying = btn.textContent.trim() === "Stop";
+  if (tonePlaying()) stopTone(); // resets all labels via onEnded
+  if (wasPlaying || !lastRun) return;
   playTone(
     {
       fS: lastRun.fS,
       fO: lastRun.fO,
       duration: lastRun.duration,
-      instrument: document.getElementById("instrument").value,
+      voice: btn.dataset.voice,
     },
-    () => setPlayButton(false)
+    resetToneButtons
   );
-  setPlayButton(true);
+  btn.textContent = "Stop";
 }
 
 // ---------- Main run ----------
@@ -450,7 +451,9 @@ document.addEventListener("DOMContentLoaded", () => {
     applyDefaults();
     run();
   });
-  document.getElementById("play-tone").addEventListener("click", togglePlayback);
+  document.querySelectorAll(".tone-btn").forEach((btn) => {
+    btn.addEventListener("click", toneButtonClick);
+  });
 
   // Draw the field grid and the default calculation on load.
   run();
