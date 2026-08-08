@@ -4,8 +4,11 @@
  */
 "use strict";
 
+const MASTER_LEVEL = 0.3;
+const FADE = 0.04; // seconds; short enough to feel instant, long enough to avoid clicks
+
 let audioCtx = null;
-let activeTone = null; // { oscillators, master, onEnded }
+let activeTone = null; // { oscillators, master, onEnded, stopTimer }
 
 function tonePlaying() {
   return activeTone !== null;
@@ -30,13 +33,13 @@ function playTone({ fS, fO, duration, voice }, onEnded) {
   }
 
   const ctx = audioCtx;
-  const t0 = ctx.currentTime + 0.05;
-  const ramp = 0.02; // attack/release to avoid clicks
+  const t0 = ctx.currentTime + 0.02;
 
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, t0);
-  master.gain.linearRampToValueAtTime(0.3, t0 + ramp);
-  master.gain.setValueAtTime(0.3, t0 + duration - ramp);
+  master.gain.linearRampToValueAtTime(MASTER_LEVEL, t0 + FADE);
+  // Hold the sustain level, then fade out at the natural end of the move.
+  master.gain.setValueAtTime(MASTER_LEVEL, t0 + Math.max(duration - FADE, FADE));
   master.gain.linearRampToValueAtTime(0, t0 + duration);
   master.connect(ctx.destination);
 
@@ -52,7 +55,10 @@ function playTone({ fS, fO, duration, voice }, onEnded) {
   if (voice === "observer" || voice === "combined") {
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueCurveAtTime(new Float32Array(fO), t0, duration);
+    // setValueCurveAtTime needs at least 2 samples
+    const curve =
+      fO.length >= 2 ? new Float32Array(fO) : new Float32Array([fO[0], fO[0]]);
+    osc.frequency.setValueCurveAtTime(curve, t0, duration);
     oscillators.push(osc);
   }
 
@@ -63,47 +69,70 @@ function playTone({ fS, fO, duration, voice }, onEnded) {
     osc.connect(g);
     g.connect(master);
     osc.start(t0);
-    osc.stop(t0 + duration + 0.01);
+    // Stop a little after the fade finishes so the gain reaches zero first.
+    osc.stop(t0 + duration + 0.02);
   }
 
   // Natural end of playback (guard: skip if this tone was already stopped)
   const first = oscillators[0];
   first.onended = () => {
     if (activeTone && activeTone.oscillators[0] === first) {
+      const tone = activeTone;
       activeTone = null;
-      master.disconnect();
-      if (onEnded) onEnded();
+      try {
+        tone.master.disconnect();
+      } catch (e) {
+        /* already disconnected */
+      }
+      if (tone.onEnded) tone.onEnded();
     }
   };
 
-  activeTone = { oscillators, master, onEnded };
+  activeTone = { oscillators, master, onEnded, stopTimer: null };
 }
 
 /**
- * Stop playback (calls the active tone's onEnded). Rather than cutting the
- * oscillators off mid-cycle (which produces an audible click/static burst),
- * fade the master gain to zero over a few tens of milliseconds and stop the
- * oscillators after the fade completes.
+ * Stop playback. Fade the master gain to zero before tearing the graph down —
+ * cutting oscillators mid-cycle produces an audible click/static burst.
  */
 function stopTone() {
   if (!activeTone) return;
   const tone = activeTone;
   activeTone = null; // clear first so osc.onended does nothing
 
-  const fade = 0.05;
   const now = audioCtx.currentTime;
   const gain = tone.master.gain;
-  gain.cancelScheduledValues(now); // drop the scheduled end-of-tone ramp
-  gain.setValueAtTime(gain.value, now); // pin the current level
-  gain.linearRampToValueAtTime(0, now + fade);
 
-  for (const osc of tone.oscillators) {
-    try {
-      osc.stop(now + fade + 0.01); // reschedule stop to after the fade
-    } catch (e) {
-      // already stopped
-    }
+  // Hold whatever level the automation is currently at, then ramp to silence.
+  // cancelAndHoldAtTime is the correct API; the older cancelScheduledValues +
+  // gain.value path is wrong because AudioParam.value often reports the last
+  // explicitly set value (0) rather than the live automated level, which would
+  // snap the gain to zero and cause the click we're fixing.
+  if (typeof gain.cancelAndHoldAtTime === "function") {
+    gain.cancelAndHoldAtTime(now);
+  } else {
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(MASTER_LEVEL, now);
   }
-  setTimeout(() => tone.master.disconnect(), (fade + 0.05) * 1000);
+  gain.linearRampToValueAtTime(0, now + FADE);
+
+  // Oscillators were already scheduled to stop at end-of-tone; calling stop()
+  // again throws. Leave them running silently until the fade finishes, then
+  // disconnect everything.
+  tone.stopTimer = setTimeout(() => {
+    for (const osc of tone.oscillators) {
+      try {
+        osc.disconnect();
+      } catch (e) {
+        /* already disconnected */
+      }
+    }
+    try {
+      tone.master.disconnect();
+    } catch (e) {
+      /* already disconnected */
+    }
+  }, (FADE + 0.03) * 1000);
+
   if (tone.onEnded) tone.onEnded();
 }
