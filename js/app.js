@@ -334,9 +334,12 @@ async function toneButtonClick(event) {
   const wasPlaying = btn.textContent.trim() === "Stop";
   if (tonePlaying()) stopTone(); // resets all labels via onEnded
   if (wasPlaying || !lastRun) return;
+
+  // Unlock synchronously in this gesture before any await (critical on iOS).
+  if (typeof unlockAudioSync === "function") unlockAudioSync();
+
   btn.textContent = "Stop";
   try {
-    // Await resume() so iOS/Safari unlocks audio inside this user gesture.
     await playTone(
       {
         fS: lastRun.fS,
@@ -350,7 +353,7 @@ async function toneButtonClick(event) {
     resetToneButtons();
     showBanner(
       "error-banner",
-      "Could not start audio playback. Tap again, or check that silent mode is off."
+      "Could not start audio. Tap a Listen button again, turn off Silent mode, and raise the volume."
     );
   }
 }

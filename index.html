@@ -9,12 +9,12 @@
     content="Calculate the Doppler pitch and tempo shift heard by an observer as a performer marches across a football field."
   />
   <!-- Bump ?v= on each deploy so browsers pick up new assets immediately -->
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script defer src="js/doppler.js?v=9"></script>
-  <script defer src="js/field.js?v=9"></script>
-  <script defer src="js/audio.js?v=9"></script>
-  <script defer src="js/app.js?v=9"></script>
+  <script defer src="js/doppler.js?v=10"></script>
+  <script defer src="js/field.js?v=10"></script>
+  <script defer src="js/audio.js?v=10"></script>
+  <script defer src="js/app.js?v=10"></script>
 </head>
 <body>
   <header class="site-header">
@@ -131,6 +131,8 @@
         <p class="hint">
           Play the performer's tone, the Doppler-shifted tone heard by the
           observer, or both together, for the duration of the move.
+          On iPhone, turn off Silent mode (the side switch) and raise the
+          volume &mdash; Web Audio follows the ringer mute.
         </p>
         <div class="listen-buttons">
           <button type="button" class="primary tone-btn" data-voice="performer" data-label="Performer tone">
