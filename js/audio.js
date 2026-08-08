@@ -79,18 +79,31 @@ function playTone({ fS, fO, duration, voice }, onEnded) {
   activeTone = { oscillators, master, onEnded };
 }
 
-/** Stop playback immediately (calls the active tone's onEnded). */
+/**
+ * Stop playback (calls the active tone's onEnded). Rather than cutting the
+ * oscillators off mid-cycle (which produces an audible click/static burst),
+ * fade the master gain to zero over a few tens of milliseconds and stop the
+ * oscillators after the fade completes.
+ */
 function stopTone() {
   if (!activeTone) return;
   const tone = activeTone;
   activeTone = null; // clear first so osc.onended does nothing
+
+  const fade = 0.05;
+  const now = audioCtx.currentTime;
+  const gain = tone.master.gain;
+  gain.cancelScheduledValues(now); // drop the scheduled end-of-tone ramp
+  gain.setValueAtTime(gain.value, now); // pin the current level
+  gain.linearRampToValueAtTime(0, now + fade);
+
   for (const osc of tone.oscillators) {
     try {
-      osc.stop();
+      osc.stop(now + fade + 0.01); // reschedule stop to after the fade
     } catch (e) {
       // already stopped
     }
   }
-  tone.master.disconnect();
+  setTimeout(() => tone.master.disconnect(), (fade + 0.05) * 1000);
   if (tone.onEnded) tone.onEnded();
 }
